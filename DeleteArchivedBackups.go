@@ -17,7 +17,6 @@ func main() {
 	// {"path":"g:/ShebB", "Filename":"buh_log3", "Days":1},
 	// {"path":"g:/ShebB", "Filename":"buh_prom8", "Days":1},
 	// ]
-	
 
 	delArchived := flag.Bool("delete_archived", false, "deletes files with attribute archived set")
 	configfile := flag.String("config", "", "full config file name (lists databases files groups)")
@@ -37,7 +36,10 @@ func main() {
 	if *delArchived {
 		for dir, slice := range files {
 			lastfilesslice := dblist.GetLastFilesGroupedByFunc(slice, dblist.GroupFunc)
-			// lastfilesslice is descending
+			// make lastfilesslice descending to use sort.Search
+			sort.Slice(lastfilesslice, func(i, j int) bool {
+				return lastfilesslice[i].Name() > lastfilesslice[j].Name() //DESC
+			})
 			lastfilesmap[dir] = lastfilesslice
 		}
 		deleteArchivedFiles(files, lastfilesmap)
@@ -47,11 +49,12 @@ func main() {
 
 }
 
+// deleteArchivedFiles needs exceptfiles be sorted descending
 func deleteArchivedFiles(files, exceptfiles map[string][]dblist.FileInfoWin) {
 	for dir, slice := range files { // for every dir
 		for _, finf := range slice { // for every file in dir
 			if !finf.IsDir() { // dont touch subdirs and not archived
-				if (finf.WinAttr & syscall.FILE_ATTRIBUTE_ARCHIVE) != 0 {
+				if (finf.WinAttr & syscall.FILE_ATTRIBUTE_ARCHIVE) == 0 { // no ARCHIVE means file has been archived
 
 					// search if file in question is in the exception list
 					curmap := exceptfiles[dir]                         // exceptfiles is descending
