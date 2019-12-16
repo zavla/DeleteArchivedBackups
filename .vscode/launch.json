@@ -11,7 +11,7 @@
             "mode": "auto",
             "program": "${fileDirname}",
             "env": {},
-            "args": ["--delete_archived","1"],
+            "args": ["-withArchiveAttr","-config","./testdata/config.json", "-dryrun"],
             "cwd": "${fileDirname}"
         }
     ]
