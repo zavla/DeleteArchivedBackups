@@ -1,4 +1,6 @@
-// package main leaves recent backups only. It doesn't delete last backup files.
+// package main rotates backup files - leaves recent backups only. It doesn't delete last backup files.
+// Every db backup file may be a FULL db backup or a differential db backup.
+// Never leave a differential backup without a correcponding FULL backup.
 package main
 
 import (
@@ -19,21 +21,25 @@ var (
 	dryRun          bool
 	configfile      string
 	keepLastNcopies uint
+	logfile         string
 )
 
+var gitCommit string = "no version"
+
 func init() {
-	// register flags in init() allows me to go test the main package
+	// registering program parameters-flags in init() allows to go test the 'main' package
 	flag.BoolVar(&printExample, "example", false,
 		"print example of config file")
 	flag.BoolVar(&delArchived, "withArchiveAttr", false,
-		"deletes files with attribute archived set")
+		"deletes also files with attribute 'A' set")
 	flag.StringVar(&configfile, "config", "",
 		"config `file` name")
 	flag.BoolVar(&dryRun, "dryrun", false,
-		"print commands (doesn't actually delete files)")
+		"print shell commands (doesn't actually delete files)")
 	flag.UintVar(&keepLastNcopies, "keeplastN", 2,
 		"keep recent N copies")
-
+	flag.StringVar(&logfile, "log", "std out",
+		"`log file` name")
 }
 
 const exampleconf = `
@@ -56,48 +62,70 @@ func main() {
 		return
 	}
 	if configfile == "" {
+		fmt.Printf(`
+		DeleteArchivedBackups, ver. %v
+		`, gitCommit)
 		flag.Usage()
 		os.Exit(1)
+	}
+	var logwriter *os.File
+	if logfile != "std out" {
+		logfile, err := filepath.Abs(logfile)
+		if err != nil {
+			fmt.Printf("Log file name incorrect: %v", err)
+			os.Exit(1)
+		}
+		logwriter, err = os.OpenFile(logfile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		log.SetOutput(logwriter)
+		defer func() {
+			log.SetOutput(os.Stdout)
+			logwriter.Close()
+		}()
+
 	}
 	conf, err := dblist.ReadConfig(configfile)
 	if err != nil {
 		log.Printf("Config file read error: %s", err)
-		return
+		os.Exit(1)
 	}
 
-	// sort conf by databases names to allow sort.Search by database name
+	// sort conf slice by databases names to allow sort.Search by database name
 	sort.Slice(conf, func(i, j int) bool {
 		return conf[i].Filename < conf[j].Filename
 	})
 
-	// get map with filename to suffixes
+	// get map with filenames to files suffixes
 	uniquesuffixes := dblist.GetMapFilenameToSuffixes(conf)
 
-	// gets unique folders names
+	// gets unique folders names with backups from config file
 	uniquedirs := dblist.GetUniquePaths(conf)
 
-	// get existing files in each unique folder
+	// get all existing files in each unique folder
 	files := dblist.ReadFilesFromPaths(uniquedirs)
 
-	lastfilesmap := make(map[string][]dblist.FileInfoWin)
+	keepfiles := make(map[string][]dblist.FileInfoWin)
 
 	// Append to dontDeleteLastbackupfiles all files that should NOT be deleted:
 	// the most recent files and files that have no config lines for them.
 	for dir, filesindir := range files {
-		// We get most recent files. The will not be deleted.
+		// get the slice of most recent files. This files will not be deleted.
 		dontDeleteLastbackupfiles := dblist.GetLastFilesGroupedByFunc(filesindir, dblist.GroupFunc, uniquesuffixes, keepLastNcopies)
 
 		// A directory may contain some extra files not covered by config file - don't delete them.
-		notinConfigFile := dblist.GetFilesNotCoveredByConfigFile(filesindir, conf, dblist.GroupFunc, uniquesuffixes)
-		dontDeleteLastbackupfiles = append(dontDeleteLastbackupfiles, notinConfigFile...)
+		notInConfigFile := dblist.GetFilesNotCoveredByConfigFile(filesindir, conf, dblist.GroupFunc, uniquesuffixes)
+		dontDeleteLastbackupfiles = append(dontDeleteLastbackupfiles, notInConfigFile...)
 
-		// We exploit descending order while searching on the list of last files.
+		// descending order expected in deleteArchivedFiles while searching in the list of last files.
 		sort.Slice(dontDeleteLastbackupfiles, func(i, j int) bool {
 			return dontDeleteLastbackupfiles[i].Name() > dontDeleteLastbackupfiles[j].Name() //DESC
 		})
-		lastfilesmap[dir] = dontDeleteLastbackupfiles
+		keepfiles[dir] = dontDeleteLastbackupfiles // keepfiles needs to be ordered
 	}
-	deleteArchivedFiles(files, lastfilesmap, delArchived, dryRun)
+	deleteArchivedFiles(files, keepfiles, delArchived, dryRun)
 
 }
 
@@ -106,25 +134,26 @@ func main() {
 func deleteArchivedFiles(files, exceptfiles map[string][]dblist.FileInfoWin, delArchived, dryrun bool) {
 	for dir, slice := range files { // for every dir
 		for _, finf := range slice { // for every file in dir
-			if !finf.IsDir() { // dont touch subdirs and not archived
+			if !finf.IsDir() { // dont touch subdirs
 				// No ARCHIVE atrribute means that file has been archived or copied somewhere.
-				// If file has Archive attribute you need a flag delArchived == true
-				if (finf.WinAttr&syscall.FILE_ATTRIBUTE_ARCHIVE) == 0 ||
+				// If file has Archive attribute you need a flag delArchived == true to delete this file.
+				if (finf.WinAttr&syscall.FILE_ATTRIBUTE_ARCHIVE) == 0 || // no archive attribute set
 					delArchived { // or you insist on deleting files with Archive attr set
 
 					// search if current file is in the exception list
-					exeptionsForDir := exceptfiles[dir]                         // exceptfiles is already sorted descending
-					pos := sort.Search(len(exeptionsForDir), func(i int) bool { // we use bin search
-						return exeptionsForDir[i].Name() <= finf.Name() // <= for the descending slice
+					keepfiles := exceptfiles[dir]                         // exceptfiles is already sorted descending
+					pos := sort.Search(len(keepfiles), func(i int) bool { // we use bin search
+						return keepfiles[i].Name() <= finf.Name() // <= for the descending slice
 
 					})
-					if pos < len(exeptionsForDir) && exeptionsForDir[pos].Name() == finf.Name() {
-						// found
+					if pos < len(keepfiles) && keepfiles[pos].Name() == finf.Name() {
+						// found in exceptfiles
 						continue // file should not be deleted. this is the last file in the group of backup files
 					}
-					fullFilename := filepath.Join(dir, finf.Name())
+					fullFilename, errpath := filepath.Abs(filepath.Join(dir, finf.Name()))
+
 					log.Printf("rm %s\n", fullFilename)
-					if !dryrun {
+					if !dryrun && errpath == nil {
 						err := os.Remove(fullFilename)
 						if err != nil {
 							log.Printf("%s\n", err)

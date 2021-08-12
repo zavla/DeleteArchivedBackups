@@ -1,9 +1,11 @@
 
 [
-	{"path":"./testdata/files", "Filename":"E08",    "suffix":"-FULL.bak",  "Days":2},
-	{"path":"./testdata/files", "Filename":"A2",     "suffix":"-FULL.bak",  "Days":10}, 
-	{"path":"./testdata/files", "Filename":"A2",     "suffix":"-differ.dif", "Days":1}, 
-	{"path":"./testdata/files/bases116", "Filename":"dbase1", "suffix":"-FULL.bak",  "Days":5},
-	{"path":"./testdata/files/bases116", "Filename":"dbase1", "suffix":"-differ.dif", "Days":1}
+	{"path":"./testdata/files/bases116", "Filename":"КипМ",     "suffix":"-FULL.rar",  "Days":10}, 
+	{"path":"./testdata/files/bases116", "Filename":"A2",     "suffix":"-differ.dif", "Days":1}, 
+	{"path":"./testdata/files/bases116", "Filename":"зап_в_кам",     "suffix":"-FULL.rar", "Days":1}, 
+	{"path":"./testdata/files/bases116", "Filename":"зап_в_кам",     "suffix":"-differ.rar", "Days":1}, 
+	{"path":"./testdata/files/bases116", "Filename":"dbase1", "suffix":"-FULL.rar",  "Days":5},
+	{"path":"./testdata/files/bases116", "Filename":"dbase1", "suffix":"-differ.rar", "Days":1}
+
 ]
 

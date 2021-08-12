@@ -5,6 +5,28 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Launch test function",
+            "type": "go",
+            "request": "launch",
+            "mode": "test",
+            "program": "${workspaceFolder}",
+            "args": [
+                "-test.run",
+                "Test_main"
+            ]
+        },
+        {
+            "name": "Launch Package",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${fileDirname}",
+            "debugAdapter": "dlv-dap",
+            "showLog": true,
+
+
+        },
+        {
             "name": "Launch",
             "type": "go",
             "request": "launch",
@@ -12,7 +34,10 @@
             "program": "${fileDirname}",
             "env": {},
             "args": ["-withArchiveAttr","-config","./testdata/config.json", "-dryrun"],
-            "cwd": "${fileDirname}"
+            "cwd": "${fileDirname}",
+            "debugAdapter": "dlv-dap",
+
+
         }
     ]
 }
