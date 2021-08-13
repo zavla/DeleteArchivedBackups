@@ -64,6 +64,29 @@ func TestMain_badconfig(t *testing.T) {
 
 }
 
+func TestMain_actualremove(t *testing.T) {
+	printExample = false
+	dryRun = false
+	delArchived = true // to delete files with A attribute set
+	configfile = "./testdata/configActualRemove.json"
+	logfile = "./testdata/logfile.tmp"
+	os.Truncate(logfile, 0)
+
+	_ = createTestFiles(t, "./testdata/files/bases818", []string{
+		"stange name",
+		"dbase1_2021-08-01T12-12-12-FULL.rar",
+		"dbase1_20210-222-3-FULL.rar",
+		"dbase1_2021-08-01T13-12-12-FULL.rar",
+		"dbase1_2021-07-01T13-12-12-FULL.rar",
+	})
+
+	main()
+
+	want := []string{"dbase1_2021-07-01T13-12-12-FULL.rar"}
+
+	CompareLines(t, logfile, want, 1, skipdateinlog)
+}
+
 // CompareLines compares lines from file with "want" slice of strings.
 func CompareLines(t *testing.T, logfile string, want []string, startline int, extract func(string, int) string) {
 	needlines := 1 << 32 // all lines
@@ -181,10 +204,11 @@ func createTestFiles(t *testing.T, dir string, files []string) (ret []string) {
 		fullname, _ = filepath.Abs(fullname)
 		_, err := os.Stat(fullname)
 		if os.IsNotExist(err) {
-			_, err := os.Create(fullname)
+			f, err := os.Create(fullname)
 			if err != nil {
 				t.Fatal(err)
 			}
+			f.Close()
 
 		}
 		ret = append(ret, fullname)

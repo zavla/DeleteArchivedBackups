@@ -72,7 +72,7 @@ func main() {
 	if logfile != "std out" {
 		logfile, err := filepath.Abs(logfile)
 		if err != nil {
-			fmt.Printf("Log file name incorrect: %v", err)
+			fmt.Printf("Log file name incorrect: %v\n", err)
 			os.Exit(1)
 		}
 		logwriter, err = os.OpenFile(logfile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
@@ -89,10 +89,14 @@ func main() {
 	}
 	conf, err := dblist.ReadConfig(configfile)
 	if err != nil {
-		log.Printf("Config file read error: %s", err)
+		log.Printf("Config file read error: %s\n", err)
 		return
 	}
-
+	if len(conf) == 0 {
+		log.Printf("Config file %v is empty. Example:\n", configfile)
+		log.Println(exampleconf)
+		return
+	}
 	// sort conf slice by databases names to allow sort.Search by database name
 	sort.Slice(conf, func(i, j int) bool {
 		return conf[i].Filename < conf[j].Filename

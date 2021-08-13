@@ -1,0 +1,8 @@
+
+[
+	{"path":"./testdata/files/bases818", "Filename":"КипМ",     "suffix":"-FULL.rar",  "Days":10}, 
+	{"path":"./testdata/files/bases818", "Filename":"dbase1", "suffix":"-FULL.rar",  "Days":5},
+	{"path":"./testdata/files/bases818", "Filename":"dbase1", "suffix":"-differ.rar", "Days":1}
+
+]
+
