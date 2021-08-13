@@ -90,7 +90,7 @@ func main() {
 	conf, err := dblist.ReadConfig(configfile)
 	if err != nil {
 		log.Printf("Config file read error: %s", err)
-		os.Exit(1)
+		return
 	}
 
 	// sort conf slice by databases names to allow sort.Search by database name

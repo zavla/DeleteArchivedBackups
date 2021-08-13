@@ -1,0 +1,6 @@
+
+[
+	{"bad":./testdata/files", "Filename":"E08",    "suffix":"-FULL.bak",  "Days":2},
+	{"path":"./testdata/files", "Filename":"A2",     "suffix":"-FULL.bak",  "Days":10} 
+]
+

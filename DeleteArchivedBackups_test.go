@@ -5,15 +5,18 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
-
-	"github.com/zavla/dblist/v3"
 )
+
+var skipdateinlog = func(s string, length int) string {
+	pos := strings.LastIndexAny(s, "\\/")
+	pos++
+	return s[pos : pos+length]
+}
 
 func Test_main(t *testing.T) {
 	printExample = false
@@ -21,19 +24,14 @@ func Test_main(t *testing.T) {
 	delArchived = true // to delete files with A attribute set
 	configfile = "./testdata/config.json"
 	logfile = "./testdata/logfile.tmp"
-	os.Truncate(logfile, 0) // for TESTs
-	//_ = createTestFiles(t, configfile)
-	_ = createTestFiles_ABackupNotInConfig(t)
+	os.Truncate(logfile, 0) // empty logfile for TESTs only
+
+	_ = testcase_manyfiles(t)
 
 	// as if we were run by scheduler
 	main()
 
-	skipdateinlog := func(s string) string {
-		pos := strings.LastIndexAny(s, "\\/")
-		pos++
-		return s[pos:]
-	}
-	// these files are not needed and may be deleted
+	// "want" - expects these files to be deleted
 	want := []string{
 		"зап_в_кам_2021-08-09T10-04-00-750-differ.rar",
 		"dbase1_2021-08-01T17-37-00-360-FULL.rar",
@@ -43,7 +41,31 @@ func Test_main(t *testing.T) {
 
 }
 
-func CompareLines(t *testing.T, logfile string, want []string, startline int, extract func(string) string) {
+func TestMain_badconfig(t *testing.T) {
+	printExample = false
+	dryRun = true
+	delArchived = true // to delete files with A attribute set
+	configfile = "./testdata/configBad.json"
+	logfile = "./testdata/logfile.tmp"
+	os.Truncate(logfile, 0) // empty logfile for TESTs only
+
+	// as if we were run by scheduler
+	main()
+
+	// "want" - expects these files to be deleted
+	want := []string{
+		"Config file read error:",
+	}
+	extract := func(s string, length int) string {
+		p := s[20 : 20+length]
+		return p
+	}
+	CompareLines(t, logfile, want, 1, extract)
+
+}
+
+// CompareLines compares lines from file with "want" slice of strings.
+func CompareLines(t *testing.T, logfile string, want []string, startline int, extract func(string, int) string) {
 	needlines := 1 << 32 // all lines
 	got, err := Readlines(logfile, 1, needlines)
 	if err != nil {
@@ -59,7 +81,7 @@ func CompareLines(t *testing.T, logfile string, want []string, startline int, ex
 
 		if i < len(got) {
 
-			compare := extract(got[i])
+			compare := extract(got[i], len(expectline))
 			if expectline != compare {
 				ok = false
 
@@ -96,7 +118,7 @@ func Readlines(filename string, startlinenumber int, countlines int) (ret []stri
 	return ret, s.Err()
 }
 
-func createTestFiles_ABackupNotInConfig(t *testing.T) []string {
+func testcase_manyfiles(t *testing.T) []string {
 	bases116 := []string{
 		"Monitor.7z",
 		"ZUP_UDB_3_2021-03-24T11-09-31-793-FULL.bak",
@@ -147,51 +169,25 @@ func createTestFiles_ABackupNotInConfig(t *testing.T) []string {
 		"зап_в_кам_2021-08-09T15-04-01-063-differ.rar",
 		"зап_в_кам_2021-08-10T10-04-00-717-differ.rar",
 	}
-	var ret []string
-	for _, name := range bases116 {
-		_, err := os.Stat(name)
-		if os.IsNotExist(err) {
-			fname, _ := filepath.Abs("./testdata/files/bases116/" + name)
-			_, err = os.Create(fname)
-			if err != nil {
-				t.Fatal(err)
-			}
-			ret = append(ret, fname)
-		}
-	}
+
+	ret := createTestFiles(t, "./testdata/files/bases116", bases116)
 	return ret
 }
 
-func createTestFiles(t *testing.T, configfile string) []string {
-	testdates := []string{
+func createTestFiles(t *testing.T, dir string, files []string) (ret []string) {
+	for _, filename := range files {
 
-		"2021-08-02T02-03-00",
-		"2021-08-01T01-02-00",
-		"2021-08-09T04-05-00",
-		"2021-08-09T04-05-10",
-		"2021-08-09T04-05-20",
-	}
-	conf, err := dblist.ReadConfig(configfile)
-	if err != nil {
-		t.Fatal(err)
-	}
-	var ret []string
-	for _, line := range conf {
-		for _, d := range testdates {
-
-			fullname := fmt.Sprintf("%v%v%v%v", filepath.Join(line.Path, line.Filename), "_", d, line.Suffix)
-			fullname, _ = filepath.Abs(fullname)
-			_, err := os.Stat(fullname)
-			if os.IsNotExist(err) {
-				_, err := os.Create(fullname)
-				if err != nil {
-					t.Fatal(err)
-				}
-
+		fullname := filepath.Join(dir, filename)
+		fullname, _ = filepath.Abs(fullname)
+		_, err := os.Stat(fullname)
+		if os.IsNotExist(err) {
+			_, err := os.Create(fullname)
+			if err != nil {
+				t.Fatal(err)
 			}
-			ret = append(ret, fullname)
 
 		}
+		ret = append(ret, fullname)
 	}
 	return ret
 }
