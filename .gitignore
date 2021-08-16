@@ -1,3 +1,7 @@
 debug
 DeleteArchivedBackups.exe
 testdata/files/
+deleteArchivedBackups.sha
+testdata/logfile.tmp
+why/config.json
+why/dellog.txt

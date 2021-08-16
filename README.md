@@ -1,10 +1,11 @@
-## A DBA backup files tool set. ##
+## A DBA tool set for manipulating backup files. ##
 
-The utility DeleteArchivedBackups is used in databases backups operations.
-Sometimes a DBA needs to keep a directory with different backup files rotated.
-That is when a DBA needs to delete marked backup files. Or when one needs to deleted all but serveral last files.
+The utility DeleteArchivedBackups is used to delete old databases backup files.
+A DBA needs to keep files in a directory with different databases backup files rotated.
+
+That is a DBA needs to to deleted all but several last files for each database.
 
 Files must obey naming scheme.
-Database name in file name and file suffix define a file group.
-Every file group may have its most recent files and outdated files.
-DeleteArchivedBackups deals with this task.
+Database name in a file name and file suffix define a group of database backups.
+Every such group may have its most recent files and outdated files.
+

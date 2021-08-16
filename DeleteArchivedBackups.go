@@ -63,8 +63,8 @@ func main() {
 	}
 	if configfile == "" {
 		fmt.Printf(`
-		DeleteArchivedBackups, ver. %v
-		`, gitCommit)
+DeleteArchivedBackups, ver. %v
+`, gitCommit)
 		flag.Usage()
 		os.Exit(1)
 	}
@@ -156,7 +156,7 @@ func deleteArchivedFiles(files, exceptfiles map[string][]dblist.FileInfoWin, del
 					}
 					fullFilename, errpath := filepath.Abs(filepath.Join(dir, finf.Name()))
 
-					log.Printf("rm %s\n", fullFilename)
+					log.Printf("rm %s\r\n", fullFilename)
 					if !dryrun && errpath == nil {
 						err := os.Remove(fullFilename)
 						if err != nil {
