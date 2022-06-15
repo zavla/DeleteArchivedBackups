@@ -1,6 +1,6 @@
 module github.com/zavla/deleteArchivedBackups
 
-go 1.16
+go 1.18
 
 require (
 	github.com/zavla/dblist/v3 v3.0.3-0.20210831102458-6761d2afce4a

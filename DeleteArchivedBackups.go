@@ -29,24 +29,26 @@ var gitCommit string = "no version"
 func init() {
 	// registering program parameters-flags in init() allows to go test the 'main' package
 	flag.BoolVar(&printExample, "example", false,
-		"print example of config file")
-	flag.BoolVar(&delArchived, "withArchiveAttr", false,
-		"deletes also files with attribute 'A' set")
+		"print example of config file config.json.")
+	flag.BoolVar(&delArchived, "A", false,
+		"also delete files that have archive attribute 'A'.")
 	flag.StringVar(&configfile, "config", "",
-		"config `file` name")
+		"config JSON `file` name, required.")
 	flag.BoolVar(&dryRun, "dryrun", false,
-		"print shell commands (doesn't actually delete files)")
+		"print shell commands for deletion (doesn't actually delete files).")
 	flag.UintVar(&keepLastNcopies, "keeplastN", 2,
-		"keep recent N copies")
-	flag.StringVar(&logfile, "log", "std out",
-		"`log file` name")
+		"keep recent N full copies for each database.")
+	flag.StringVar(&logfile, "log", "stdout",
+		"`log file` name. If you want to keep track of files that were deleted.")
 }
+
+//const exampleconf = "test string\r\n"
 
 const exampleconf = `
 [
 	{"path":"./testdata/files", "Filename":"E08",    "suffix":"-FULL.bak",  "Days":2},
-	{"path":"./testdata/files", "Filename":"A2",     "suffix":"-FULL.bak",  "Days":10}, 
-	{"path":"./testdata/files", "Filename":"A2",     "suffix":"-differ.dif", "Days":1}, 
+	{"path":"./testdata/files", "Filename":"A2",     "suffix":"-FULL.bak",  "Days":10},
+	{"path":"./testdata/files", "Filename":"A2",     "suffix":"-differ.dif", "Days":1},
 	{"path":"./testdata/files/bases116", "Filename":"dbase1", "suffix":"-FULL.bak",  "Days":5},
 	{"path":"./testdata/files/bases116", "Filename":"dbase1", "suffix":"-differ.dif", "Days":1}
 ]
@@ -58,12 +60,19 @@ func main() {
 	//println(exampleconf)
 
 	if printExample {
-		fmt.Println(exampleconf)
+		fmt.Print(exampleconf)
 		return
 	}
-	if configfile == "" {
-		fmt.Printf(`
-DeleteArchivedBackups, ver. %v
+
+	if len(os.Args) == 0 || configfile == "" {
+		fmt.Printf(
+			`
+DeleteArchivedBackups.exe, ver. %v
+			This is a tool for deletion of backup files of databases.
+			Backup file names consist of database name and the datetime. 
+			It does not delete N last copies of each database backups.
+			It uses config JSON file to know database names.
+Example: DeleteArchivedBackups.exe -A -config ./config.json
 `, gitCommit)
 		flag.Usage()
 		os.Exit(1)
@@ -94,7 +103,7 @@ DeleteArchivedBackups, ver. %v
 	}
 	if len(conf) == 0 {
 		log.Printf("Config file %v is empty. Example:\n", configfile)
-		log.Println(exampleconf)
+		log.Print(exampleconf)
 		return
 	}
 	// sort conf slice by databases names to allow sort.Search by database name

@@ -220,7 +220,7 @@ func TestMainParamExample(t *testing.T) {
 	printExample = true
 	oldstdout := os.Stdout
 	name := "./testdata/configExample.json"
-	f, err := os.OpenFile(name, os.O_CREATE, 0600)
+	f, err := os.OpenFile(name, os.O_CREATE|os.O_TRUNC, 0660)
 	if err != nil {
 		t.Errorf("%s", err)
 		return
@@ -228,7 +228,7 @@ func TestMainParamExample(t *testing.T) {
 	os.Stdout = f
 	defer func() { os.Stdout = oldstdout }()
 
-	main()
+	main() //main will print some help to stdout
 
 	os.Stdout = oldstdout
 	_ = f.Close()
@@ -242,8 +242,8 @@ func TestMainParamExample(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if !bytes.Equal(b, []byte(exampleconf+"\n")) { // \n was added with fmt.Println()
-		t.Errorf("not equal\n want %v\n got %v\n", []byte(exampleconf), b)
+	if !bytes.Equal(b, []byte(exampleconf)) {
+		t.Errorf("want %v\n got %v\n", exampleconf, string(b))
 		return
 	}
 }

@@ -1,4 +1,4 @@
-git log --pretty="%d %h %ae %cd" -1 > ./gitCommit
+git log --pretty="%h %ae %cd" -1 > ./gitCommit
 
 $gg = Get-Content ./gitCommit
 
