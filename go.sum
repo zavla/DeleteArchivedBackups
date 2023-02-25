@@ -1,7 +1,5 @@
-github.com/zavla/dblist/v3 v3.0.2 h1:KHxU3oC52/DU6C+Y9EyRDmPFzB/MDQooHt7TNRvNEYc=
-github.com/zavla/dblist/v3 v3.0.2/go.mod h1:50zyWn745NnNN3Uj4/sBK0oMFSZ4DhSAb+0Fta1jdLY=
 github.com/zavla/dblist/v3 v3.0.3-0.20210831102458-6761d2afce4a h1:UxhSuvJP+Mkv9h3+kHm86lDzRT2KErtm8EpOssAfu+g=
 github.com/zavla/dblist/v3 v3.0.3-0.20210831102458-6761d2afce4a/go.mod h1:Gyjd0CiYKx+vQx8C/Lm/IwtAuZkWsfsRmfel5oQIj7c=
 golang.org/x/sys v0.0.0-20190222072716-a9d3bda3a223/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
-golang.org/x/sys v0.0.0-20210831042530-f4d43177bf5e h1:XMgFehsDnnLGtjvjOfqWSUzt0alpTR1RSEuznObga2c=
-golang.org/x/sys v0.0.0-20210831042530-f4d43177bf5e/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+golang.org/x/sys v0.1.0 h1:kunALQeHf1/185U1i0GOB/fy1IPRDDpuoOOqRReG57U=
+golang.org/x/sys v0.1.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
